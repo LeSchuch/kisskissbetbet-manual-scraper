@@ -14,7 +14,7 @@
         "html_odds_attribute": "div",
         "html_odds_class": "coeficiente-layout2",
         "window_size": "1920,2000",
-        "wait": 10
+        "wait": 15
     },
     "Betclic": {
         "name": "Betclic",
