@@ -4,11 +4,11 @@ import sys
 import os
 import unicodedata
 from bs4 import BeautifulSoup
+from fp.fp import FreeProxy
+from fake_useragent import UserAgent
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from fp.fp import FreeProxy
-from fake_useragent import UserAgent
 
 
 DRIVER_PATH = "/opt/chromedriver"
@@ -43,9 +43,24 @@ SERIE_A = "Serie A"
 
 def init_menu():
     print(
+        r"""                   
+                                                ___
+                                            _.-'___'-._
+          _                _              .'--.`   `.--'.
+ ___  ___| |__  _   _  ___| |__          /.'   \   /   `.\
+/ __|/ __| '_ \| | | |/ __| '_ \        | /'-._/```\_.-'\ |
+\__ \ (__| | | | |_| | (__| | | |       |/    |     |    \|
+|___/\___|_| |_|\__,_|\___|_| |_|       | \ .''-._.-''. / |
+                                         \ |     |     | /
+                                          '.'._.-'-._.'.'
+                                            '-:_____;-'
+
+--------------------------------------------------------------
+                Python script to retrieve the odds
+        for the 5 major European football championships 
+                on all 17 French bookmakers
+--------------------------------------------------------------
         """
-    
-    """
     )
 
 
@@ -53,7 +68,6 @@ def menu_bookmaker(bookmakers):
     print("\n[0] Exit")
     for key, i in zip(bookmakers.keys(), range(1, len(bookmakers) + 1)):
         print([i], key)
-    print("\n")
 
 
 def menu_league():
@@ -62,7 +76,7 @@ def menu_league():
     print("[2] La Liga")
     print("[3] Ligue 1")
     print("[4] Premier League")
-    print("[5] Serie A\n")
+    print("[5] Serie A")
 
 
 def get_dict_bookmakers():
@@ -288,14 +302,14 @@ def debug(elements):
 
 if __name__ == "__main__":
 
+    # Display init menu
+    init_menu()
+
     # Get bookmakers data
     dict_bookmakers = get_dict_bookmakers()
 
     # Infinite loop
     while 1:
-
-        # Display init menu
-        init_menu()
 
         # Display bookmakers choices
         menu_bookmaker(dict_bookmakers)
@@ -306,7 +320,7 @@ if __name__ == "__main__":
 
         # Display leagues choices
         menu_league()
-        league_choice = int(input("Choose a soccer league: "))
+        league_choice = int(input("Choose a league: "))
 
         # Handle user choice for his league selection
         league = handle_league_choice(league_choice, dict_bookmakers)
