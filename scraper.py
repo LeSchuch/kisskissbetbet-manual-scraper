@@ -163,9 +163,12 @@ def scrap_bookmaker(bookmaker, league, retry=False):
     try:
         driver.get(url)
     except Exception as e:
-        print("Exception", e)
+        if "ERR_TUNNEL_CONNECTION_FAILED" in str(e):
+            print("[!] Proxy error, getting a new one [!]\n")
+            return scrap_bookmaker(config, bookmaker, league)
 
-    time.sleep(bookmaker["wait"])
+    wait = bookmaker["wait"] if not retry else bookmaker["wait"] + 5
+    time.sleep(wait)
 
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
