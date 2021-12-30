@@ -41,11 +41,17 @@ python3 scraper.py
 ```python
 
 {
-    "HomeTeam": "Séville",
-    "AwayTeam": "Atletico Madrid",
-    "HomeTeamOdd": "2.65",
-    "DrawOdd": "2.90",
-    "AwayTeamOdd": "2.72"
+    "bookmaker": "Betclic",
+    "league": "Ligue 1"
+    "teams": {
+        "home": "Troyes",
+        "away": "Lyon"
+    },
+    "odds": {
+        "home": 4.0,
+        "draw": 3.9,
+        "away": 1.73
+    }
 }
 
 ```
