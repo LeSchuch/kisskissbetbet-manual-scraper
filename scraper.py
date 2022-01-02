@@ -168,11 +168,13 @@ def scrap_bookmaker(bookmaker, league, retry=False):
         print("[!] Selenium exception, {} [!]\n".format(e))
         return scrap_bookmaker(config, bookmaker, league)
 
+    time.sleep(5)
+
     if bookmaker["name"] == "Betway":
         event = driver.find_element(
             By.XPATH, "//*[@id='snc-central-column']/div[2]/div[3]/ul/li[1]"
         )
-        if event and event.text.strip().lower() != "matchs":
+        if event and event.text.strip().lower() != MATCHS:
             button = driver.find_element(
                 By.XPATH, "//*[@id='snc-central-column']/div[2]/div[3]/ul/li[2]/a/span"
             )
@@ -183,7 +185,7 @@ def scrap_bookmaker(bookmaker, league, retry=False):
         event = driver.find_element(
             By.XPATH, "//*[@id='snc-component-tabs-centred']/ul/li[1]"
         )
-        if event and event.text.strip().lower() != "matchs":
+        if event and event.text.strip().lower() != MATCHS:
             pop_up = driver.find_element(
                 By.XPATH, "//*[@id='didomi-popup']/div/div/div/span"
             )
