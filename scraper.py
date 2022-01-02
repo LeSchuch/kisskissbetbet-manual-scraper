@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from fp.fp import FreeProxy
 from fake_useragent import UserAgent
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 
@@ -136,14 +137,14 @@ def get_webdriver(bookmaker):
         options.add_argument("--user-agent={0}".format(ua))
         print("\n[+] User Agent: {} [+]".format(ua))
 
-    proxy = FreeProxy(country_id=["FR"], timeout=1, rand=True).get()
-    webdriver.DesiredCapabilities.CHROME["proxy"] = {
-        "httpProxy": proxy,
-        "ftpProxy": proxy,
-        "sslProxy": proxy,
-        "proxyType": "MANUAL",
-    }
-    print("[+] Proxy: {} [+]".format(proxy))
+    # proxy = FreeProxy(country_id=["FR"], timeout=1, rand=True).get()
+    # webdriver.DesiredCapabilities.CHROME["proxy"] = {
+    #     "httpProxy": proxy,
+    #     "ftpProxy": proxy,
+    #     "sslProxy": proxy,
+    #     "proxyType": "MANUAL",
+    # }
+    # print("[+] Proxy: {} [+]".format(proxy))
 
     options.add_argument("--window-size={}".format("1920,2000"))
     options.add_argument("--no-sandbox")
@@ -163,12 +164,21 @@ def scrap_bookmaker(bookmaker, league, retry=False):
     try:
         driver.get(url)
     except Exception as e:
-        if "ERR_TUNNEL_CONNECTION_FAILED" in str(e):
-            print("[!] Proxy error, getting a new one [!]\n")
-            return scrap_bookmaker(config, bookmaker, league)
+        print("[!] Selenium exception, {} [!]\n".format(e))
+        return scrap_bookmaker(config, bookmaker, league)
 
-    wait = bookmaker["wait"] if not retry else bookmaker["wait"] + 5
-    time.sleep(wait)
+    if bookmaker["name"] == "Betway":
+        driver.find_element(
+            By.XPATH, "//*[@id='snc-central-column']/div[2]/div[3]/ul/li[2]/a/span"
+        ).click()
+
+    if bookmaker["name"] == "Geny Bet":
+        driver.find_element(
+            By.XPATH, "//*[@id='didomi-popup']/div/div/div/span"
+        ).click()
+        time.sleep(2)
+        driver.find_element(By.XPATH, "//*[@id='snc-tab-match']").click()
+        time.sleep(3)
 
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
@@ -230,13 +240,13 @@ def parse_data(soup, bookmaker):
                 if len(list(scrap_teams)) == 1:
                     scrap_teams = scrap_teams[0].split("/")
 
-                    #
+                    # Betway
                     if len(list(scrap_teams)) == 1:
-                        scrap_teams = scrap_teams[0].split("-")
+                        scrap_teams = scrap_teams[0].split("              ")
 
-                        # Betway
+                        #
                         if len(list(scrap_teams)) == 1:
-                            scrap_teams = scrap_teams[0].split("              ")
+                            scrap_teams = scrap_teams[0].split("-")
 
                 parsed = True
 
