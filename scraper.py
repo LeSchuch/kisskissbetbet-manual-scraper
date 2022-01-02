@@ -14,6 +14,7 @@ from selenium.webdriver.chrome.service import Service
 
 DRIVER_PATH = "/opt/chromedriver"
 BOOKMAKERS_JSON = os.getcwd() + "/bookmakers.json"
+MATCHS = "matchs"
 
 # Bookmakers
 BARRIERE_BET = "Barrière Bet"
@@ -168,17 +169,31 @@ def scrap_bookmaker(bookmaker, league, retry=False):
         return scrap_bookmaker(config, bookmaker, league)
 
     if bookmaker["name"] == "Betway":
-        driver.find_element(
-            By.XPATH, "//*[@id='snc-central-column']/div[2]/div[3]/ul/li[2]/a/span"
-        ).click()
+        event = driver.find_element(
+            By.XPATH, "//*[@id='snc-central-column']/div[2]/div[3]/ul/li[1]"
+        )
+        if event and event.text.strip().lower() != "matchs":
+            button = driver.find_element(
+                By.XPATH, "//*[@id='snc-central-column']/div[2]/div[3]/ul/li[2]/a/span"
+            )
+            if button:
+                button.click()
 
     if bookmaker["name"] == "Geny Bet":
-        driver.find_element(
-            By.XPATH, "//*[@id='didomi-popup']/div/div/div/span"
-        ).click()
-        time.sleep(2)
-        driver.find_element(By.XPATH, "//*[@id='snc-tab-match']").click()
-        time.sleep(3)
+        event = driver.find_element(
+            By.XPATH, "//*[@id='snc-component-tabs-centred']/ul/li[1]"
+        )
+        if event and event.text.strip().lower() != "matchs":
+            pop_up = driver.find_element(
+                By.XPATH, "//*[@id='didomi-popup']/div/div/div/span"
+            )
+            if pop_up:
+                pop_up.click()
+                time.sleep(2)
+            button = driver.find_element(By.XPATH, "//*[@id='snc-tab-match']")
+            if button:
+                button.click()
+                time.sleep(3)
 
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
