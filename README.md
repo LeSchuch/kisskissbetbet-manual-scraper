@@ -3,7 +3,7 @@
 KissKissBetBet scraper is a tool that scraps soccer fixtures odds for the 5
 major european leagues on all 17 french bookmakers.
 
-<a href="https://asciinema.org/a/niuM25zwiVpimYkFHFzgywPcC?autoplay=1" target="_blank"><img src="https://asciinema.org/a/niuM25zwiVpimYkFHFzgywPcC.svg" width="80%"></a>
+<a href="https://asciinema.org/a/nYyG3oxM9zqKGyKzw66PUYJLv?autoplay=1" target="_blank"><img src="https://asciinema.org/a/nYyG3oxM9zqKGyKzw66PUYJLv.svg" width="80%"></a>
 
 ## Installation
 
