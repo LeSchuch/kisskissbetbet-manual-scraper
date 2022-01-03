@@ -18,8 +18,13 @@ Create a python virtual environment and activate it:
 
 ```bash
 virtualenv venv
-pip install -r requirements.txt
 source venv/bin/activate
+```
+
+Install required python modules:
+
+```bash
+pip install -r requirements.txt
 ```
 
 Scraping uses selenium, for this you need :
@@ -32,7 +37,7 @@ Please use a version of chromedriver compatible with your Google Chrome
 
 ### Usage
 
-Launch script in ```kisskissbetbet-manual-scraper``` directory :
+Run script in ```kisskissbetbet-manual-scraper``` directory :
 
 ```bash
 python3 scraper.py
