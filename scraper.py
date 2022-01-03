@@ -1,3 +1,4 @@
+import datetime
 import json
 import time
 import sys
@@ -59,7 +60,7 @@ def init_menu():
 
 --------------------------------------------------------------
                 Python script to retrieve the odds
-        for the 5 major European football championships 
+        for the 5 major European soccer championships 
                 on all 17 French bookmakers
 --------------------------------------------------------------
         """
@@ -128,24 +129,49 @@ def format_odd(odd):
     return round(float(str(odd).replace(",", ".")), 2)
 
 
+def get_current_date():
+    return datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+
+
+def get_duration(begin_date, end_date):
+    duration = ""
+    diff = datetime.datetime.strptime(
+        end_date, "%Y/%m/%d %H:%M:%S"
+    ) - datetime.datetime.strptime(begin_date, "%Y/%m/%d %H:%M:%S")
+    days, seconds = diff.days, diff.seconds
+    hours = days * 24 + seconds // 3600
+    minutes = (seconds % 3600) // 60
+    seconds = seconds % 60
+    if hours:
+        duration += "{0}h".format(hours)
+    if minutes:
+        duration += " {0}m".format(minutes)
+    if seconds:
+        duration += " {0}s".format(seconds)
+    return duration.strip()
+
+
 def get_webdriver(bookmaker):
 
     options = webdriver.ChromeOptions()
     options.headless = True
 
     if bookmaker not in [BWIN]:
+        print("\n[+] Getting a user-agent [+]")
+        time.sleep(1)
         ua = UserAgent().random
         options.add_argument("--user-agent={0}".format(ua))
-        print("\n[+] User Agent: {} [+]".format(ua))
+        print("[+] User-Agent: {} [+]".format(ua))
 
-    # proxy = FreeProxy(country_id=["FR"], timeout=1, rand=True).get()
-    # webdriver.DesiredCapabilities.CHROME["proxy"] = {
-    #     "httpProxy": proxy,
-    #     "ftpProxy": proxy,
-    #     "sslProxy": proxy,
-    #     "proxyType": "MANUAL",
-    # }
-    # print("[+] Proxy: {} [+]".format(proxy))
+    print("\n[+] Getting a proxy [+]")
+    proxy = FreeProxy(country_id=["FR"], timeout=1, rand=True).get()
+    webdriver.DesiredCapabilities.CHROME["proxy"] = {
+        "httpProxy": proxy,
+        "ftpProxy": proxy,
+        "sslProxy": proxy,
+        "proxyType": "MANUAL",
+    }
+    print("[+] Proxy: {} [+]".format(proxy))
 
     options.add_argument("--window-size={}".format("1920,2000"))
     options.add_argument("--no-sandbox")
@@ -155,6 +181,8 @@ def get_webdriver(bookmaker):
 
 
 def scrap_bookmaker(bookmaker, league, retry=False):
+
+    begin_date = get_current_date()
 
     driver = get_webdriver(bookmaker["name"])
     url = bookmaker["url"] + bookmaker["url_{}".format(format_league_name(league))]
@@ -168,7 +196,7 @@ def scrap_bookmaker(bookmaker, league, retry=False):
         print("[!] Selenium exception, {} [!]\n".format(e))
         return scrap_bookmaker(config, bookmaker, league)
 
-    time.sleep(5)
+    # time.sleep(5)
 
     if bookmaker["name"] == "Betway":
         event = driver.find_element(
@@ -217,15 +245,29 @@ def scrap_bookmaker(bookmaker, league, retry=False):
         )
         return None
 
-    print("[+] Scraping result in JSON format [+]\n")
+    print("[+] Displaying scraping result [+]\n")
+
+    for f in fixtures:
+        print(
+            json.dumps(
+                json_load(f),
+                ensure_ascii=False,
+                indent=4,
+            )
+        )
+        time.sleep(1)
+
     print(
-        json.dumps(
-            json_load(fixtures),
-            ensure_ascii=False,
-            indent=4,
+        "\n[+] {} fixtures found on {} for {} [+]".format(
+            len(fixtures), bookmaker["name"], league
         )
     )
-    print("\n")
+
+    print(
+        "\n[+] Time elapsed : {} [+]\n".format(
+            get_duration(begin_date, get_current_date())
+        )
+    )
 
     return fixtures
 
@@ -339,7 +381,7 @@ if __name__ == "__main__":
     dict_bookmakers = get_dict_bookmakers()
 
     # Infinite loop
-    while 1:
+    if 1:
 
         # Display bookmakers choices
         menu_bookmaker(dict_bookmakers)
@@ -347,6 +389,7 @@ if __name__ == "__main__":
 
         # Handle user choice for his bookmaker selection
         bookmaker = handle_bookmaker_choice(bookmaker_choice, dict_bookmakers)
+        print("\n[+] You chose {} [+]".format(bookmaker["name"]))
 
         # Display leagues choices
         menu_league()
@@ -354,6 +397,7 @@ if __name__ == "__main__":
 
         # Handle user choice for his league selection
         league = handle_league_choice(league_choice, dict_bookmakers)
+        print("\n[+] You chose {} [+]".format(league))
 
         # Scrap data
         data = scrap_bookmaker(bookmaker, league)
