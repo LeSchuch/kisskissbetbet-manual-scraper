@@ -194,7 +194,7 @@ def scrap_bookmaker(bookmaker, league, retry=False):
         driver.get(url)
     except Exception as e:
         print("[!] Selenium exception, {} [!]\n".format(e))
-        return scrap_bookmaker(config, bookmaker, league)
+        return scrap_bookmaker(bookmaker, league)
 
     # time.sleep(5)
 
@@ -381,7 +381,7 @@ if __name__ == "__main__":
     dict_bookmakers = get_dict_bookmakers()
 
     # Infinite loop
-    if 1:
+    while 1:
 
         # Display bookmakers choices
         menu_bookmaker(dict_bookmakers)
