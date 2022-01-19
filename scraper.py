@@ -159,7 +159,10 @@ def get_webdriver(bookmaker):
     if bookmaker not in [BWIN]:
         print("\n[+] Getting a user-agent [+]")
         time.sleep(1)
-        ua = UserAgent().random
+        try:
+            ua = UserAgent().random
+        except IndexError:
+            ua = UserAgent().random
         options.add_argument("--user-agent={0}".format(ua))
         print("[+] User-Agent: {} [+]".format(ua))
 
