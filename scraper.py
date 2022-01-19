@@ -315,6 +315,8 @@ def parse_data(soup, bookmaker):
             for t in scrap_teams:
                 team = t.strip() if parsed else t.text.strip()
                 if team and not team.isdigit() and team != "N":
+                    if bookmaker["name"] == PARIONS_SPORT:
+                        team = team.split(" À")[0].strip()
                     teams.append(team)
 
             # Parse odds
