@@ -167,14 +167,14 @@ def get_webdriver(bookmaker):
         print("[+] User-Agent: {} [+]".format(ua))
 
     print("\n[+] Getting a proxy [+]")
-    # proxy = FreeProxy(country_id=["FR"], timeout=1, rand=True).get()
-    # webdriver.DesiredCapabilities.CHROME["proxy"] = {
-    #     "httpProxy": proxy,
-    #     "ftpProxy": proxy,
-    #     "sslProxy": proxy,
-    #     "proxyType": "MANUAL",
-    # }
-    # print("[+] Proxy: {} [+]".format(proxy))
+    proxy = FreeProxy(country_id=["FR"], timeout=1, rand=True).get()
+    webdriver.DesiredCapabilities.CHROME["proxy"] = {
+        "httpProxy": proxy,
+        "ftpProxy": proxy,
+        "sslProxy": proxy,
+        "proxyType": "MANUAL",
+    }
+    print("[+] Proxy: {} [+]".format(proxy))
 
     options.add_argument("--window-size={}".format("1920,2000"))
     options.add_argument("--no-sandbox")
@@ -205,7 +205,7 @@ def scrap_bookmaker(bookmaker, league, retry=False):
         event = driver.find_element(
             By.XPATH, "//*[@id='snc-central-column']/div[2]/div[3]/ul/li[1]"
         )
-        if event and event.text.strip().lower() != MATCHS:
+        if all(event, event.text.strip().lower() != MATCHS):
             button = driver.find_element(
                 By.XPATH, "//*[@id='snc-central-column']/div[2]/div[3]/ul/li[2]/a/span"
             )
@@ -216,7 +216,7 @@ def scrap_bookmaker(bookmaker, league, retry=False):
         event = driver.find_element(
             By.XPATH, "//*[@id='snc-component-tabs-centred']/ul/li[1]"
         )
-        if event and event.text.strip().lower() != MATCHS:
+        if all(event, event.text.strip().lower() != MATCHS):
             pop_up = driver.find_element(
                 By.XPATH, "//*[@id='didomi-popup']/div/div/div/span"
             )
@@ -289,6 +289,9 @@ def parse_data(soup, bookmaker):
                 bookmaker["html_teams_attribute"],
                 class_=bookmaker["html_teams_class"],
             )
+
+            if all(len(list(scrap_teams)) == 1, bookmaker["name"] == JOA_BET):
+                break
             if len(list(scrap_teams)) == 1:
                 if bookmaker["name"] == BETWAY:
                     scrap_teams = scrap_teams[0].text.replace("\n", "").split("       ")
@@ -298,13 +301,11 @@ def parse_data(soup, bookmaker):
                     scrap_teams = scrap_teams[0].text.replace("\n", "").split("//")
                 if any(b == bookmaker["name"] for b in (PARIONS_SPORT, UNIBET)):
                     scrap_teams = scrap_teams[0].text.split(" - ")
-
                 parsed = True
 
             for t in scrap_teams:
-                print("DEBUG", t)
                 team = t.strip() if parsed else t.text.strip()
-                if team and not team.isdigit() and team != "N":
+                if all(team, not team.isdigit(), team != "N"):
                     teams.append(team)
 
             # Parse odds
@@ -314,7 +315,7 @@ def parse_data(soup, bookmaker):
 
             for o in scrap_odds:
                 odd = o.text.strip()
-                if odd and odd != "...":
+                if all(odd, odd != "..."):
                     odds.append(odd)
             if bookmaker["name"] == ZEBET:
                 for o in range(0, len(odds), 2):
