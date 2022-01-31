@@ -157,7 +157,7 @@ def get_webdriver(bookmaker):
     options.headless = True
 
     if bookmaker not in [BWIN]:
-        print("\n[+] Getting a user-agent [+]")
+        print("\n[+] Getting an user-agent [+]")
         time.sleep(1)
         try:
             ua = UserAgent().random
@@ -167,14 +167,14 @@ def get_webdriver(bookmaker):
         print("[+] User-Agent: {} [+]".format(ua))
 
     print("\n[+] Getting a proxy [+]")
-    proxy = FreeProxy(country_id=["FR"], timeout=1, rand=True).get()
-    webdriver.DesiredCapabilities.CHROME["proxy"] = {
-        "httpProxy": proxy,
-        "ftpProxy": proxy,
-        "sslProxy": proxy,
-        "proxyType": "MANUAL",
-    }
-    print("[+] Proxy: {} [+]".format(proxy))
+    # proxy = FreeProxy(country_id=["FR"], timeout=1, rand=True).get()
+    # webdriver.DesiredCapabilities.CHROME["proxy"] = {
+    #     "httpProxy": proxy,
+    #     "ftpProxy": proxy,
+    #     "sslProxy": proxy,
+    #     "proxyType": "MANUAL",
+    # }
+    # print("[+] Proxy: {} [+]".format(proxy))
 
     options.add_argument("--window-size={}".format("1920,2000"))
     options.add_argument("--no-sandbox")
@@ -236,20 +236,20 @@ def scrap_bookmaker(bookmaker, league, retry=False):
     if not fixtures:
         if not retry:
             print(
-                "[!] Retry once fetching {0} odds for {1} [!]".format(
+                "[!] Retry once fetching {0} fixtures for {1} [!]".format(
                     bookmaker["name"], league
                 )
             )
             return scrap_bookmaker(bookmaker, league, True)
         print(
-            "[!] No result in fetching {0} odds for {1} [!]\n".format(
+            "[!] No result in fetching {0} fixtures for {1} [!]\n".format(
                 bookmaker["name"], league
             )
         )
         return None
 
     print(
-        "\n[+] {} fixtures found on {} for {} [+]".format(
+        "\n[+] {} fixtures found on {} for {} [+]\n".format(
             len(fixtures), bookmaker["name"], league
         )
     )
@@ -302,6 +302,7 @@ def parse_data(soup, bookmaker):
                 parsed = True
 
             for t in scrap_teams:
+                print("DEBUG", t)
                 team = t.strip() if parsed else t.text.strip()
                 if team and not team.isdigit() and team != "N":
                     teams.append(team)
