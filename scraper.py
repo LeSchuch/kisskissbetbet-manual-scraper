@@ -205,7 +205,7 @@ def scrap_bookmaker(bookmaker, league, retry=False):
         event = driver.find_element(
             By.XPATH, "//*[@id='snc-central-column']/div[2]/div[3]/ul/li[1]"
         )
-        if all(event, event.text.strip().lower() != MATCHS):
+        if all([event, event.text.strip().lower() != MATCHS]):
             button = driver.find_element(
                 By.XPATH, "//*[@id='snc-central-column']/div[2]/div[3]/ul/li[2]/a/span"
             )
@@ -216,7 +216,7 @@ def scrap_bookmaker(bookmaker, league, retry=False):
         event = driver.find_element(
             By.XPATH, "//*[@id='snc-component-tabs-centred']/ul/li[1]"
         )
-        if all(event, event.text.strip().lower() != MATCHS):
+        if all([event, event.text.strip().lower() != MATCHS]):
             pop_up = driver.find_element(
                 By.XPATH, "//*[@id='didomi-popup']/div/div/div/span"
             )
@@ -290,7 +290,7 @@ def parse_data(soup, bookmaker):
                 class_=bookmaker["html_teams_class"],
             )
 
-            if all(len(list(scrap_teams)) == 1, bookmaker["name"] == JOA_BET):
+            if all([len(list(scrap_teams)) == 1, bookmaker["name"] == JOA_BET]):
                 break
             if len(list(scrap_teams)) == 1:
                 if bookmaker["name"] == BETWAY:
@@ -305,7 +305,7 @@ def parse_data(soup, bookmaker):
 
             for t in scrap_teams:
                 team = t.strip() if parsed else t.text.strip()
-                if all(team, not team.isdigit(), team != "N"):
+                if all([team, not team.isdigit(), team != "N"]):
                     teams.append(team)
 
             # Parse odds
@@ -315,7 +315,7 @@ def parse_data(soup, bookmaker):
 
             for o in scrap_odds:
                 odd = o.text.strip()
-                if all(odd, odd != "..."):
+                if all([odd, odd != "..."]):
                     odds.append(odd)
             if bookmaker["name"] == ZEBET:
                 for o in range(0, len(odds), 2):
