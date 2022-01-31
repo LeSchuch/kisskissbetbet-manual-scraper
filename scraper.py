@@ -190,7 +190,7 @@ def scrap_bookmaker(bookmaker, league, retry=False):
     driver = get_webdriver(bookmaker["name"])
     url = bookmaker["url"] + bookmaker["url_{}".format(format_league_name(league))]
 
-    print("\n[+] Fetching {0} odds for {1} [+]".format(bookmaker["name"], league))
+    print("\n[+] Fetching {0} fixtures for {1} [+]".format(bookmaker["name"], league))
     print("[+] URL: {} [+]\n".format(url))
 
     try:
@@ -199,7 +199,7 @@ def scrap_bookmaker(bookmaker, league, retry=False):
         print("[!] Selenium exception, {} [!]\n".format(e))
         return scrap_bookmaker(bookmaker, league)
 
-    # time.sleep(5)
+    time.sleep(10)
 
     if bookmaker["name"] == "Betway":
         event = driver.find_element(
@@ -281,42 +281,32 @@ def parse_data(soup, bookmaker):
     for card in soup.find_all(
         bookmaker["html_cards_attribute"], class_=bookmaker["html_cards_class"]
     ):
-
         teams = []
         odds = []
         parsed = False
 
         try:
-
             # Parse teams
             scrap_teams = card.find_all(
                 bookmaker["html_teams_attribute"],
                 class_=bookmaker["html_teams_class"],
             )
-
-            # PMU
             if len(list(scrap_teams)) == 1:
-                scrap_teams = scrap_teams[0].text.replace("\n", "").split("//")
-
-                #
-                if len(list(scrap_teams)) == 1:
-                    scrap_teams = scrap_teams[0].split("/")
-
-                    # Betway
-                    if len(list(scrap_teams)) == 1:
-                        scrap_teams = scrap_teams[0].split("              ")
-
-                        #
-                        if len(list(scrap_teams)) == 1:
-                            scrap_teams = scrap_teams[0].split("-")
+                print(scrap_teams)
+                if bookmaker["name"] == BETWAY:
+                    scrap_teams = scrap_teams[0].text.replace("\n", "").split("       ")
+                if any(b == bookmaker["name"] for b in (FEELING_BET, FRANCE_PARI)):
+                    scrap_teams = scrap_teams[0].text.split("/")
+                if bookmaker["name"] == PMU:
+                    scrap_teams = scrap_teams[0].text.replace("\n", "").split("//")
+                if any(b == bookmaker["name"] for b in (PARIONS_SPORT, UNIBET)):
+                    scrap_teams = scrap_teams[0].text.split(" - ")
 
                 parsed = True
 
             for t in scrap_teams:
                 team = t.strip() if parsed else t.text.strip()
                 if team and not team.isdigit() and team != "N":
-                    if bookmaker["name"] == PARIONS_SPORT:
-                        team = team.split(" À")[0].strip()
                     teams.append(team)
 
             # Parse odds
