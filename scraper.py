@@ -199,9 +199,9 @@ def scrap_bookmaker(bookmaker, league, retry=False):
         print("[!] Selenium exception, {} [!]\n".format(e))
         return scrap_bookmaker(bookmaker, league)
 
-    time.sleep(10)
+    time.sleep(5 if not retry else 10)
 
-    if bookmaker["name"] == "Betway":
+    if bookmaker["name"] == BETWAY:
         event = driver.find_element(
             By.XPATH, "//*[@id='snc-central-column']/div[2]/div[3]/ul/li[1]"
         )
@@ -212,7 +212,7 @@ def scrap_bookmaker(bookmaker, league, retry=False):
             if button:
                 button.click()
 
-    if bookmaker["name"] == "Geny Bet":
+    if bookmaker["name"] == GENY_BET:
         event = driver.find_element(
             By.XPATH, "//*[@id='snc-component-tabs-centred']/ul/li[1]"
         )
@@ -248,7 +248,11 @@ def scrap_bookmaker(bookmaker, league, retry=False):
         )
         return None
 
-    print("[+] Displaying scraping result [+]\n")
+    print(
+        "\n[+] {} fixtures found on {} for {} [+]".format(
+            len(fixtures), bookmaker["name"], league
+        )
+    )
 
     for f in fixtures:
         print(
@@ -259,12 +263,6 @@ def scrap_bookmaker(bookmaker, league, retry=False):
             )
         )
         time.sleep(1)
-
-    print(
-        "\n[+] {} fixtures found on {} for {} [+]".format(
-            len(fixtures), bookmaker["name"], league
-        )
-    )
 
     print(
         "\n[+] Time elapsed : {} [+]\n".format(
@@ -292,7 +290,6 @@ def parse_data(soup, bookmaker):
                 class_=bookmaker["html_teams_class"],
             )
             if len(list(scrap_teams)) == 1:
-                print(scrap_teams)
                 if bookmaker["name"] == BETWAY:
                     scrap_teams = scrap_teams[0].text.replace("\n", "").split("       ")
                 if any(b == bookmaker["name"] for b in (FEELING_BET, FRANCE_PARI)):
