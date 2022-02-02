@@ -36,6 +36,9 @@ VBET = "Vbet"
 WINAMAX = "Winamax"
 ZEBET = "Zebet"
 
+SCRAP_BETWAY_LIVE = "uk-flex-middle"
+SCRAP_GENY_BET_LIVE = "//li[@data-tab-id='snc-tab-match']"
+
 # Leagues
 BUNDESLIGA = "Bundesliga"
 LIGA = "La Liga"
@@ -133,6 +136,20 @@ def get_current_date():
     return datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
 
 
+def is_valid_fixture(odds, teams):
+    try:
+        float(str(odds[0]).replace(",", "."))
+        float(str(odds[1]).replace(",", "."))
+        float(str(odds[2]).replace(",", "."))
+    except ValueError:
+        return False
+    if min([format_odd(odds[0]), format_odd(odds[1]), format_odd(odds[2])]) >= 3:
+        return False
+    if any(["," in teams[0], "," in teams[1]]):
+        return False
+    return True
+
+
 def get_duration(begin_date, end_date):
     duration = ""
     diff = datetime.datetime.strptime(
@@ -143,11 +160,11 @@ def get_duration(begin_date, end_date):
     minutes = (seconds % 3600) // 60
     seconds = seconds % 60
     if hours:
-        duration += "{0}h".format(hours)
+        duration += "{}h".format(hours)
     if minutes:
-        duration += " {0}m".format(minutes)
+        duration += " {}m".format(minutes)
     if seconds:
-        duration += " {0}s".format(seconds)
+        duration += " {}s".format(seconds)
     return duration.strip()
 
 
@@ -158,12 +175,11 @@ def get_webdriver(bookmaker):
 
     if bookmaker not in [BWIN]:
         print("\n[+] Getting an user-agent [+]")
-        time.sleep(1)
         try:
             ua = UserAgent().random
         except IndexError:
             ua = UserAgent().random
-        options.add_argument("--user-agent={0}".format(ua))
+        options.add_argument("--user-agent={}".format(ua))
         print("[+] User-Agent: {} [+]".format(ua))
 
     print("\n[+] Getting a proxy [+]")
@@ -190,43 +206,28 @@ def scrap_bookmaker(bookmaker, league, retry=False):
     driver = get_webdriver(bookmaker["name"])
     url = bookmaker["url"] + bookmaker["url_{}".format(format_league_name(league))]
 
-    print("\n[+] Fetching {0} fixtures for {1} [+]".format(bookmaker["name"], league))
+    print("\n[+] Fetching {} fixtures for {} [+]".format(bookmaker["name"], league))
     print("[+] URL: {} [+]\n".format(url))
 
     try:
         driver.get(url)
     except Exception as e:
-        print("[!] Selenium exception, {} [!]\n".format(e))
+        print("[!] Selenium exception raised, {} [!]\n".format(e))
         return scrap_bookmaker(bookmaker, league)
 
     time.sleep(5 if not retry else 10)
 
-    if bookmaker["name"] == BETWAY:
-        event = driver.find_element(
-            By.XPATH, "//*[@id='snc-central-column']/div[2]/div[3]/ul/li[1]"
-        )
-        if all([event, event.text.strip().lower() != MATCHS]):
-            button = driver.find_element(
-                By.XPATH, "//*[@id='snc-central-column']/div[2]/div[3]/ul/li[2]/a/span"
-            )
-            if button:
-                button.click()
-
-    if bookmaker["name"] == GENY_BET:
-        event = driver.find_element(
-            By.XPATH, "//*[@id='snc-component-tabs-centred']/ul/li[1]"
-        )
-        if all([event, event.text.strip().lower() != MATCHS]):
-            pop_up = driver.find_element(
-                By.XPATH, "//*[@id='didomi-popup']/div/div/div/span"
-            )
-            if pop_up:
-                pop_up.click()
-                time.sleep(2)
-            button = driver.find_element(By.XPATH, "//*[@id='snc-tab-match']")
-            if button:
-                button.click()
-                time.sleep(3)
+    try:
+        if bookmaker["name"] == BETWAY:
+            buttons = driver.find_elements(By.CLASS_NAME, SCRAP_BETWAY_LIVE)
+            for button in buttons:
+                if button.text == MATCHS:
+                    button.click()
+                    break
+        elif bookmaker["name"] == GENY_BET:
+            driver.find_element(By.XPATH, SCRAP_GENY_BET_LIVE).click()
+    except Exception as e:
+        print(e)
 
     soup = BeautifulSoup(driver.page_source, "html.parser")
     driver.quit()
@@ -236,13 +237,13 @@ def scrap_bookmaker(bookmaker, league, retry=False):
     if not fixtures:
         if not retry:
             print(
-                "[!] Retry once fetching {0} fixtures for {1} [!]".format(
+                "[!] Retry once fetching {} fixtures for {} [!]".format(
                     bookmaker["name"], league
                 )
             )
             return scrap_bookmaker(bookmaker, league, True)
         print(
-            "[!] No result in fetching {0} fixtures for {1} [!]\n".format(
+            "[!] No result in fetching {} fixtures for {} [!]\n".format(
                 bookmaker["name"], league
             )
         )
@@ -260,7 +261,8 @@ def scrap_bookmaker(bookmaker, league, retry=False):
                 json_load(f),
                 ensure_ascii=False,
                 indent=4,
-            )
+            ),
+            "\n",
         )
         time.sleep(1)
 
@@ -326,19 +328,20 @@ def parse_data(soup, bookmaker):
 
             # Construct fixture data
             try:
-                fixtures.append(
-                    {
-                        "teams": {
-                            "home": format_team_name(teams[0]),
-                            "away": format_team_name(teams[1]),
-                        },
-                        "odds": {
-                            "home": format_odd(odds[0]),
-                            "draw": format_odd(odds[1]),
-                            "away": format_odd(odds[2]),
-                        },
-                    }
-                )
+                if is_valid_fixture(odds, teams):
+                    fixtures.append(
+                        {
+                            "teams": {
+                                "home": format_team_name(teams[0]),
+                                "away": format_team_name(teams[1]),
+                            },
+                            "odds": {
+                                "home": format_odd(odds[0]),
+                                "draw": format_odd(odds[1]),
+                                "away": format_odd(odds[2]),
+                            },
+                        }
+                    )
             except IndexError:
                 continue
 
