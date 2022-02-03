@@ -9,8 +9,11 @@ from fp.fp import FreeProxy
 from fake_useragent import UserAgent
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 DRIVER_PATH = "/opt/chromedriver"
@@ -38,6 +41,7 @@ ZEBET = "Zebet"
 
 SCRAP_BETWAY_LIVE = "uk-flex-middle"
 SCRAP_GENY_BET_LIVE = "//li[@data-tab-id='snc-tab-match']"
+SCRAP_GENY_BET_POP_UP = "didomi-notice-disagree-button"
 
 # Leagues
 BUNDESLIGA = "Bundesliga"
@@ -182,15 +186,15 @@ def get_webdriver(bookmaker):
         options.add_argument("--user-agent={}".format(ua))
         print("[+] User-Agent: {} [+]".format(ua))
 
-    print("\n[+] Getting a proxy [+]")
-    proxy = FreeProxy(country_id=["FR"], timeout=1, rand=True).get()
-    webdriver.DesiredCapabilities.CHROME["proxy"] = {
-        "httpProxy": proxy,
-        "ftpProxy": proxy,
-        "sslProxy": proxy,
-        "proxyType": "MANUAL",
-    }
-    print("[+] Proxy: {} [+]".format(proxy))
+    # print("\n[+] Getting a proxy [+]")
+    # proxy = FreeProxy(country_id=["FR"], timeout=1, rand=True).get()
+    # webdriver.DesiredCapabilities.CHROME["proxy"] = {
+    #     "httpProxy": proxy,
+    #     "ftpProxy": proxy,
+    #     "sslProxy": proxy,
+    #     "proxyType": "MANUAL",
+    # }
+    # print("[+] Proxy: {} [+]".format(proxy))
 
     options.add_argument("--window-size={}".format("1920,2000"))
     options.add_argument("--no-sandbox")
@@ -211,13 +215,17 @@ def scrap_bookmaker(bookmaker, league, retry=False):
 
     try:
         driver.get(url)
-    except Exception as e:
-        print("[!] Selenium exception raised, {} [!]\n".format(e))
-        return scrap_bookmaker(bookmaker, league)
-
-    time.sleep(5 if not retry else 10)
-
-    try:
+        time.sleep(5 if not retry else 10)
+        WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located(
+                (
+                    By.XPATH,
+                    "//{}[contains(@class, '{}')]".format(
+                        bookmaker["html_cards_attribute"], bookmaker["html_cards_class"]
+                    ),
+                )
+            )
+        )
         if bookmaker["name"] == BETWAY:
             buttons = driver.find_elements(By.CLASS_NAME, SCRAP_BETWAY_LIVE)
             for button in buttons:
@@ -225,12 +233,23 @@ def scrap_bookmaker(bookmaker, league, retry=False):
                     button.click()
                     break
         elif bookmaker["name"] == GENY_BET:
+            driver.find_element(By.ID, SCRAP_GENY_BET_POP_UP).click()
             driver.find_element(By.XPATH, SCRAP_GENY_BET_LIVE).click()
+    except TimeoutException as e:
+        print("[!] Selenium exception raised [!]\n {}".format(e))
+        if not retry:
+            return scrap_bookmaker(bookmaker, league, retry=True)
+        print("[!] Scraping error, fixture card was not found [!]\n")
+        return None
     except Exception as e:
-        print(e)
-
-    soup = BeautifulSoup(driver.page_source, "html.parser")
-    driver.quit()
+        raise
+        print("[!] Selenium exception raised [!]\n {}".format(e))
+        if not retry:
+            return scrap_bookmaker(bookmaker, league, retry=True)
+        return None
+    finally:
+        soup = BeautifulSoup(driver.page_source, "html.parser")
+        driver.quit()
 
     fixtures = parse_data(soup, bookmaker)
 
@@ -241,7 +260,7 @@ def scrap_bookmaker(bookmaker, league, retry=False):
                     bookmaker["name"], league
                 )
             )
-            return scrap_bookmaker(bookmaker, league, True)
+            return scrap_bookmaker(bookmaker, league, retry=True)
         print(
             "[!] No result in fetching {} fixtures for {} [!]\n".format(
                 bookmaker["name"], league
@@ -278,9 +297,10 @@ def scrap_bookmaker(bookmaker, league, retry=False):
 def parse_data(soup, bookmaker):
 
     fixtures = []
-    for card in soup.find_all(
+    cards = soup.find_all(
         bookmaker["html_cards_attribute"], class_=bookmaker["html_cards_class"]
-    ):
+    )
+    for card in cards:
         teams = []
         odds = []
         parsed = False
