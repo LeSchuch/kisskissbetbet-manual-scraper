@@ -315,9 +315,9 @@ def parse_data(soup, bookmaker):
             if all([len(list(scrap_teams)) == 1, bookmaker["name"] == JOA_BET]):
                 break
             if len(list(scrap_teams)) == 1:
-                if bookmaker["name"] == BETWAY:
+                if any(b == bookmaker["name"] for b in [BETWAY, FEELING_BET]):
                     scrap_teams = scrap_teams[0].text.replace("\n", "").split("       ")
-                if any(b == bookmaker["name"] for b in (FEELING_BET, FRANCE_PARI)):
+                if bookmaker["name"] == FRANCE_PARI:
                     scrap_teams = scrap_teams[0].text.split("/")
                 if bookmaker["name"] == PMU:
                     scrap_teams = scrap_teams[0].text.replace("\n", "").split("//")
